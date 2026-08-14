@@ -24,10 +24,8 @@ Layout follows community plugin conventions ([plugin-template](https://github.co
 
 ## Install
 
-After this repo is on GitHub (replace `YOUR_GITHUB_USER`):
-
 ```sh
-dsh plugin --profile web add github:YOUR_GITHUB_USER/dsh-llm-oauth
+dsh plugin --profile web add github:ziyou979/dsh-llm-oauth
 ```
 
 From a local checkout:

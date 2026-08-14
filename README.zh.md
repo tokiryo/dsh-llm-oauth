@@ -24,10 +24,8 @@ DeepSeek Harness 的**独立 OAuth / 订阅套餐** LLM 插件。用 `dsh plugin
 
 ## 安装
 
-把本仓库推到 GitHub 后（把 `YOUR_GITHUB_USER` 换成你的用户名）：
-
 ```sh
-dsh plugin --profile web add github:YOUR_GITHUB_USER/dsh-llm-oauth
+dsh plugin --profile web add github:ziyou979/dsh-llm-oauth
 ```
 
 本地 checkout：

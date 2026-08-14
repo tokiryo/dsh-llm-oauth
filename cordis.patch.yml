@@ -1,6 +1,6 @@
 # Bundle layer applied when this package is listed in a profile's
 # `dsh.profile.bundles`. Install:
-#   dsh plugin --profile web add github:YOUR_GITHUB_USER/dsh-llm-oauth
+#   dsh plugin --profile web add github:ziyou979/dsh-llm-oauth
 #
 # The row `name` must match package.json. `inject` waits for the first-party
 # LLM service; slash-command registration is optional (see apply()).

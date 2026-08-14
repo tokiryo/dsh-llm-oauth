@@ -51,11 +51,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/YOUR_GITHUB_USER/dsh-llm-oauth.git"
+    "url": "git+https://github.com/ziyou979/dsh-llm-oauth.git"
   },
-  "homepage": "https://github.com/YOUR_GITHUB_USER/dsh-llm-oauth",
+  "homepage": "https://github.com/ziyou979/dsh-llm-oauth",
   "bugs": {
-    "url": "https://github.com/YOUR_GITHUB_USER/dsh-llm-oauth/issues"
+    "url": "https://github.com/ziyou979/dsh-llm-oauth/issues"
   },
   "dsh": {
     "bundle": {
