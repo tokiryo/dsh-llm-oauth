@@ -49,27 +49,21 @@ allowBuilds:
 
 ## Login
 
-Interactive device-code / browser flows need a real terminal:
-
-```sh
-npx dsh-llm-oauth-login xai
-npx dsh-llm-oauth-login github-copilot
-npx dsh-llm-oauth-login openai-codex
-npx dsh-llm-oauth-login --list
-```
-
-Credentials are stored at `$DSH_HOME/pi-ai-oauth.json` (default `~/.dsh/pi-ai-oauth.json`).
-
 In the Web UI:
 
 ```
-/oauth status
-/oauth list
 /oauth login xai
-/oauth logout xai
 ```
 
-Use the CLI when a flow prompts for a secret or paste-back code.
+The command returns the authorization URL and user code immediately. Finish in the browser, then run `/oauth status`.
+
+Credentials are stored at `$DSH_HOME/pi-ai-oauth.json` (default `~/.dsh/pi-ai-oauth.json`).
+
+Do not run `npx dsh-llm-oauth-login` — that name is not an npm package. If you need a terminal:
+
+```sh
+node %USERPROFILE%\.dsh\profiles\web\node_modules\dsh-llm-oauth\bin\login.mjs xai
+```
 
 Then pick the provider (e.g. `xai`) and a catalog model in the model selector.
 

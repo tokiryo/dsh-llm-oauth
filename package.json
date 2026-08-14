@@ -1,7 +1,7 @@
 {
   "name": "dsh-llm-oauth",
   "description": "DeepSeek Harness plugin: OAuth / subscription-plan LLM providers (Grok, GitHub Copilot, OpenAI Codex, Anthropic, OpenRouter)",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "type": "module",
   "packageManager": "pnpm@11.7.0",
@@ -10,8 +10,7 @@
   },
   "scripts": {
     "build": "tsdown --config tsdown.config.ts",
-    "prepare": "node scripts/prepare.mjs",
-    "test": "vitest run",
+    "test": "node ./node_modules/vitest/vitest.mjs run",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "login": "node bin/login.mjs"
   },

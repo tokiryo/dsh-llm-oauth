@@ -40,7 +40,7 @@ export function apply(ctx: Context, config: Config): void {
       name: 'oauth',
       description: 'log in / out of OAuth LLM providers (xai, github-copilot, openai-codex, …)',
       input: { hint: '[status|list|login <provider>|logout <provider>]' },
-      handler: invocation => handleOauthCommand(adapter, invocation.rawInput),
+      handler: invocation => handleOauthCommand(adapter, invocation.rawInput, invocation.signal),
     })
   }
 

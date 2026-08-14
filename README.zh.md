@@ -53,28 +53,21 @@ allowBuilds:
 
 ## 登录（订阅套餐）
 
-必须在**真实终端**里走 device code / 浏览器授权：
+启动 Web 后在输入框：
 
-```sh
-# 插件装进 profile 之后
-npx dsh-llm-oauth-login xai
-npx dsh-llm-oauth-login github-copilot
-npx dsh-llm-oauth-login openai-codex
-npx dsh-llm-oauth-login --list
 ```
+/oauth login xai
+```
+
+命令会马上返回授权链接和验证码（不会一直转圈）。浏览器里完成登录后再执行 `/oauth status`。
 
 凭据写到 `$DSH_HOME/pi-ai-oauth.json`（默认 `~/.dsh/pi-ai-oauth.json`）。
 
-Web UI 里也可以：
+若 Web 命令不可用，用已安装包里的脚本（不要 `npx dsh-llm-oauth-login`，npm 上没有这个包）：
 
+```sh
+node %USERPROFILE%\.dsh\profiles\web\node_modules\dsh-llm-oauth\bin\login.mjs xai
 ```
-/oauth status
-/oauth list
-/oauth login xai
-/oauth logout xai
-```
-
-需要手动输入验证码 / secret 的流程请用 CLI。
 
 登录后在模型选择器里选对应 provider（如 `xai`）和 catalog 模型即可对话。过期 token 由 pi-ai 在请求路径上刷新。
 
