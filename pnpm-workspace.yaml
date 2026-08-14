@@ -11,3 +11,7 @@ allowBuilds:
 ignoredBuiltDependencies:
   - '@google/genai'
   - protobufjs
+
+minimumReleaseAgeExclude:
+  - '@earendil-works/pi-ai@0.84.2'
+  - '@earendil-works/pi-telemetry@0.84.2'

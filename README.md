@@ -19,14 +19,14 @@ Packaging follows the official plugin guides — [your first plugin](https://git
 
 | Subscription | Provider id | Notes |
 |---|---|---|
-| Grok (SuperGrok / X Premium) | `xai` | Catalog currently lists Grok **4.3 / 4.5** (and Grok Build). **Grok 4.6 is not available yet** — pi-ai has not published it. |
+| Grok (SuperGrok / X Premium) | `xai` | Model ids come from the installed pi-ai catalog. |
 | GitHub Copilot | `github-copilot` | Optional Enterprise URL defaults to public `github.com`. |
 | ChatGPT / Codex plan | `openai-codex` | **Not** the `openai` API-key route. Needs device-code authorization enabled in ChatGPT — see below. |
 | Anthropic subscription | `anthropic` | |
 | OpenRouter | `openrouter` | Large catalog — enable only if you need it. |
 | Kimi For Coding | `kimi-coding` | |
 
-Model ids come from the installed `@earendil-works/pi-ai` catalog, not from this plugin. When that package adds Grok 4.6, bump the dependency here and rebuild.
+Model ids come from the installed `@earendil-works/pi-ai` catalog, not from this plugin. Bump that dependency and rebuild when you want a newer catalog.
 
 ## Enable vs sign-in
 
@@ -163,7 +163,7 @@ node bin/login.mjs --list
 
 ## Limits
 
-- **Grok 4.6 is not listed** until `@earendil-works/pi-ai` ships it; this plugin does not maintain a private model table
+- Model list follows `@earendil-works/pi-ai`; this plugin does not maintain a private model table
 - No image / vision path
 - No full native replay signatures
 - No in-browser OAuth callback server (device code / open URL)

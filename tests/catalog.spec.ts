@@ -1,3 +1,4 @@
+import { createModels } from '@earendil-works/pi-ai'
 import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_PROVIDERS,
@@ -23,6 +24,13 @@ describe('oauth catalog', () => {
     expect(ids).toContain('xai')
     expect(ids).toContain('github-copilot')
     expect(ids).toContain('openai-codex')
+  })
+
+  it('includes Grok 4.6 on the xai provider from the installed pi-ai catalog', () => {
+    const [xai] = resolveOAuthProviders(['xai'])
+    const models = createModels()
+    models.setProvider(xai!)
+    expect(models.getModels('xai').map(model => model.id)).toContain('grok-4.6')
   })
 
   it('refuses the OpenAI API-key catalog id', () => {

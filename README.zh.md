@@ -19,14 +19,14 @@ DeepSeek Harness 的**独立 OAuth / 订阅套餐** LLM 插件。用 `dsh plugin
 
 | 你想用的订阅 | provider id | 说明 |
 |---|---|---|
-| Grok（SuperGrok / X Premium） | `xai` | 当前 catalog 只有 Grok **4.3 / 4.5**（以及 Grok Build）。**暂不支持 Grok 4.6**——底层 pi-ai 还没收录。 |
+| Grok（SuperGrok / X Premium） | `xai` | 模型 id 来自已安装的 pi-ai catalog。 |
 | GitHub Copilot | `github-copilot` | 可选 Enterprise URL 默认留空，即公开的 `github.com`。 |
 | ChatGPT / Codex 订阅 | `openai-codex` | **不是** `openai` API Key。必须先在 ChatGPT 设置里打开设备码授权，见下文。 |
 | Anthropic 订阅 | `anthropic` | |
 | OpenRouter | `openrouter` | catalog 很大，确认需要再开启。 |
 | Kimi For Coding | `kimi-coding` | |
 
-模型列表来自已安装的 `@earendil-works/pi-ai` catalog，本插件不维护私有模型表。等 pi-ai 发布 Grok 4.6 后，这里只要升依赖并重新构建即可。
+模型列表来自已安装的 `@earendil-works/pi-ai` catalog，本插件不维护私有模型表。要更新 catalog，升该依赖并重新构建即可。
 
 ## 开启模型 vs 登录
 
@@ -169,7 +169,7 @@ node bin/login.mjs --list
 
 ## 限制
 
-- **暂不支持 Grok 4.6**：等 `@earendil-works/pi-ai` 收录后再升依赖；本插件不维护私有模型表
+- 模型列表跟随 `@earendil-works/pi-ai`；本插件不维护私有模型表
 - 无图片 / vision（请用官方 `dsh-llm-pi-ai`）
 - 无完整 native replay 签名
 - Web 端没有独立 OAuth 回调服务器（device code / 打开 URL）
