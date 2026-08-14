@@ -21,7 +21,7 @@ Packaging follows the official plugin guides — [your first plugin](https://git
 |---|---|---|
 | Grok (SuperGrok / X Premium) | `xai` | Model ids come from the installed pi-ai catalog. |
 | GitHub Copilot | `github-copilot` | Optional Enterprise URL defaults to public `github.com`. |
-| ChatGPT / Codex plan | `openai-codex` | **Not** the `openai` API-key route. Needs device-code authorization enabled in ChatGPT — see below. |
+| ChatGPT / Codex plan | `openai-codex` | **Not** the `openai` API-key route. Needs device-code authorization enabled in ChatGPT — see below. **Account-ban risk.** |
 | Anthropic subscription | `anthropic` | |
 | OpenRouter | `openrouter` | Large catalog — enable only if you need it. |
 | Kimi For Coding | `kimi-coding` | |
@@ -104,6 +104,8 @@ Host HTTP API (same-origin Web):
 ![Enable device-code authorization for Codex](docs/codex-auth.png)
 
 Without that toggle, the device page rejects the code even though this plugin already picked the device-code method.
+
+**Risk:** signing in to Codex / ChatGPT this way (device code or any unofficial client OAuth) can get the ChatGPT account restricted or banned. OpenAI treats this as using the subscription outside official Codex / ChatGPT apps. Use a disposable account if you try it; do not put a main or paid account you cannot afford to lose on this route. This plugin cannot prevent or reverse a ban.
 
 ## Login / commands
 

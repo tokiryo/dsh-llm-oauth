@@ -21,7 +21,7 @@ DeepSeek Harness 的**独立 OAuth / 订阅套餐** LLM 插件。用 `dsh plugin
 |---|---|---|
 | Grok（SuperGrok / X Premium） | `xai` | 模型 id 来自已安装的 pi-ai catalog。 |
 | GitHub Copilot | `github-copilot` | 可选 Enterprise URL 默认留空，即公开的 `github.com`。 |
-| ChatGPT / Codex 订阅 | `openai-codex` | **不是** `openai` API Key。必须先在 ChatGPT 设置里打开设备码授权，见下文。 |
+| ChatGPT / Codex 订阅 | `openai-codex` | **不是** `openai` API Key。必须先在 ChatGPT 设置里打开设备码授权，见下文。**有封号风险。** |
 | Anthropic 订阅 | `anthropic` | |
 | OpenRouter | `openrouter` | catalog 很大，确认需要再开启。 |
 | Kimi For Coding | `kimi-coding` | |
@@ -108,6 +108,8 @@ Web 端的 `openai-codex` 走 **设备码**，不用本机 `:1455` 浏览器回�
 ![为 Codex 启用设备代码授权](docs/codex-auth.png)
 
 没开这个开关时，即使用户码是对的，授权页也会拒绝。本插件已经自动选了设备码方式，缺的是 ChatGPT 侧的许可。
+
+**风险：** 用设备码或任何非官方客户端做 Codex / ChatGPT OAuth 登录，可能导致 ChatGPT 账号被限制或封禁。OpenAI 会把这当成在官方 Codex / ChatGPT 应用之外使用订阅。若要试，请用可丢弃的号，不要拿主力号或付不起损失的付费号登录。本插件无法防止或解除封禁。
 
 ## 命令行 / 斜杠命令
 
