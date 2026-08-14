@@ -5,7 +5,9 @@ import type { OAuthPiAiAdapter } from '../src/adapter.ts'
 function fakeAdapter(login: OAuthPiAiAdapter['login']): OAuthPiAiAdapter {
   return {
     authPath: () => '/tmp/pi-ai-oauth.json',
+    catalogIds: () => ['xai'],
     routeIds: () => ['xai'],
+    displayName: () => 'xAI',
     checkAuth: async () => undefined,
     logout: async () => undefined,
     login,
@@ -67,5 +69,72 @@ describe('/oauth login', () => {
     const again = await handleOauthCommand(adapter, 'login xai')
     expect(again.text).toContain('WAIT-0001')
     expect(listLoginWatches()).toHaveLength(1)
+  })
+
+  it('auto-answers openai-codex select prompts with device_code', async () => {
+    let chosen: string | undefined
+    const adapter = {
+      authPath: () => '/tmp/pi-ai-oauth.json',
+      catalogIds: () => ['openai-codex'],
+      routeIds: () => ['openai-codex'],
+      displayName: () => 'OpenAI Codex',
+      checkAuth: async () => undefined,
+      logout: async () => undefined,
+      login: async (_provider, interaction) => {
+        chosen = await interaction.prompt({
+          type: 'select',
+          message: 'Select OpenAI Codex login method:',
+          options: [
+            { id: 'browser', label: 'Browser login (default)' },
+            { id: 'device_code', label: 'Device code login (headless)' },
+          ],
+        })
+        interaction.notify({
+          type: 'device_code',
+          verificationUri: 'https://auth.openai.com/codex/device',
+          userCode: 'CODEX-99',
+        })
+        return new Promise(() => undefined)
+      },
+    } as unknown as OAuthPiAiAdapter
+
+    const result = await handleOauthCommand(adapter, 'login openai-codex')
+    expect(chosen).toBe('device_code')
+    expect(result.kind).toBe('success')
+    expect(result.text).toContain('CODEX-99')
+    expect(result.text).toContain('device_code')
+    expect(result.openUrl).toBe('https://auth.openai.com/codex/device')
+    expect(result.userCode).toBe('CODEX-99')
+  })
+
+  it('auto-answers github-copilot enterprise prompt with blank (github.com)', async () => {
+    let enterprise: string | undefined
+    const adapter = {
+      authPath: () => '/tmp/pi-ai-oauth.json',
+      catalogIds: () => ['github-copilot'],
+      routeIds: () => ['github-copilot'],
+      displayName: () => 'GitHub Copilot',
+      checkAuth: async () => undefined,
+      logout: async () => undefined,
+      login: async (_provider, interaction) => {
+        enterprise = await interaction.prompt({
+          type: 'text',
+          message: 'GitHub Enterprise URL/domain (blank for github.com)',
+          placeholder: 'company.ghe.com',
+        })
+        interaction.notify({
+          type: 'device_code',
+          verificationUri: 'https://github.com/login/device',
+          userCode: 'GH-1234',
+        })
+        return new Promise(() => undefined)
+      },
+    } as unknown as OAuthPiAiAdapter
+
+    const result = await handleOauthCommand(adapter, 'login github-copilot')
+    expect(enterprise).toBe('')
+    expect(result.kind).toBe('success')
+    expect(result.openUrl).toBe('https://github.com/login/device')
+    expect(result.userCode).toBe('GH-1234')
   })
 })

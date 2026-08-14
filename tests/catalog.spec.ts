@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_PROVIDERS, oauthCatalogProviders, resolveOAuthProviders } from '../src/catalog.ts'
+import {
+  DEFAULT_PROVIDERS,
+  SETTINGS_NS,
+  catalogDisplayName,
+  oauthCatalogProviders,
+  resolveOAuthProviders,
+} from '../src/catalog.ts'
+import { enabledProviderIds, resolveConfig } from '../src/config.ts'
 
 describe('oauth catalog', () => {
   it('ships only ids that exist and declare OAuth', () => {
@@ -28,5 +35,30 @@ describe('oauth catalog', () => {
 
   it('refuses an empty list', () => {
     expect(() => resolveOAuthProviders([])).toThrow(/at least one/)
+  })
+
+  it('owns the llm-oauth settings namespace id', () => {
+    expect(SETTINGS_NS).toBe('llm-oauth')
+  })
+
+  it('resolves catalog display names', () => {
+    expect(catalogDisplayName('xai')).toMatch(/xAI|xai/i)
+    expect(catalogDisplayName('not-real')).toBe('not-real')
+  })
+})
+
+describe('config enablement', () => {
+  it('defaults to an empty enabled set (dormant install)', () => {
+    const resolved = resolveConfig()
+    expect(resolved.catalog).toEqual([...DEFAULT_PROVIDERS])
+    expect(resolved.providers).toEqual({})
+    expect(enabledProviderIds(resolved)).toEqual([])
+  })
+
+  it('lists enabled provider keys sorted', () => {
+    expect(enabledProviderIds({
+      catalog: [...DEFAULT_PROVIDERS],
+      providers: { openrouter: {}, xai: {} },
+    })).toEqual(['openrouter', 'xai'])
   })
 })

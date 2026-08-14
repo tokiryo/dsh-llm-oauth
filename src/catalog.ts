@@ -15,6 +15,9 @@ export const DEFAULT_PROVIDERS = [
   'kimi-coding',
 ] as const
 
+/** Settings / configurable-provider namespace owned by this plugin. */
+export const SETTINGS_NS = 'llm-oauth'
+
 /**
  * Every installed catalog provider that declares an OAuth method.
  */
@@ -23,7 +26,7 @@ export function oauthCatalogProviders(): Provider[] {
 }
 
 /**
- * Resolve configured route ids against the installed catalog.
+ * Resolve configured catalog ids against the installed catalog.
  * @param requested - provider ids from plugin config.
  * @returns catalog providers in config order.
  */
@@ -44,7 +47,16 @@ export function resolveOAuthProviders(requested: readonly string[]): Provider[] 
     resolved.push(provider)
   }
   if (resolved.length === 0) {
-    throw new Error('dsh-llm-oauth: providers must list at least one OAuth-capable catalog id')
+    throw new Error('dsh-llm-oauth: catalog must list at least one OAuth-capable catalog id')
   }
   return resolved
+}
+
+/**
+ * Human label for a catalog id (falls back to the id).
+ * @param providerId - pi-ai catalog provider id.
+ */
+export function catalogDisplayName(providerId: string): string {
+  const hit = builtinProviders().find(provider => provider.id === providerId)
+  return hit?.name ?? providerId
 }

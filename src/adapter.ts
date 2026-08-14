@@ -3,6 +3,11 @@
  *
  * Unlike first-party dsh-llm-pi-ai, Models is constructed with a CredentialStore
  * so streamSimple can refresh subscription tokens under the store lock.
+ *
+ * The adapter always knows the full OAuth catalog (login/status/listModels for
+ * owned routes). Which routes are *registered* with `ctx.llm` is decided by
+ * the runtime from the enabled settings profiles — dormant providers stay off
+ * the model picker until the user turns them on.
  */
 
 import {
@@ -37,8 +42,8 @@ export interface OAuthAdapterOptions {
   authPath: string
   /** Shared with the login CLI and `/oauth` command. */
   store: CredentialStore
-  /** Catalog provider ids this adapter owns. */
-  providers: readonly string[]
+  /** Full OAuth catalog this adapter can own (not necessarily registered). */
+  catalog: readonly string[]
 }
 
 /** OAuth-backed multi-provider adapter. */
@@ -49,16 +54,24 @@ export class OAuthPiAiAdapter extends LlmAdapter {
 
   constructor(private readonly options: OAuthAdapterOptions) {
     super()
-    this.providers = resolveOAuthProviders(options.providers)
+    this.providers = resolveOAuthProviders(options.catalog)
     const mutable: MutableModels = createModels({ credentials: options.store })
     for (const provider of this.providers) mutable.setProvider(provider)
     this.models = mutable
     this.byId = new Map(this.providers.map(provider => [provider.id, provider]))
   }
 
-  /** Provider route ids this adapter registered. */
-  routeIds(): string[] {
+  /** Full catalog route ids (settings directory), not only registered ones. */
+  catalogIds(): string[] {
     return this.providers.map(provider => provider.id)
+  }
+
+  /**
+   * @deprecated Use {@link catalogIds}. Kept for older command helpers.
+   * @returns full catalog route ids.
+   */
+  routeIds(): string[] {
+    return this.catalogIds()
   }
 
   /** Shared Models collection (login/logout/status). */
@@ -69,6 +82,11 @@ export class OAuthPiAiAdapter extends LlmAdapter {
   /** Durable auth file path. */
   authPath(): string {
     return this.options.authPath
+  }
+
+  /** Catalog display name for a route id. */
+  displayName(provider: string): string {
+    return this.byId.get(provider)?.name ?? provider
   }
 
   override providerInfo(provider: string): LlmProviderInfo {
@@ -142,7 +160,7 @@ export class OAuthPiAiAdapter extends LlmAdapter {
     if (auth === undefined) {
       throw new LlmError(
         `dsh-llm-oauth: provider "${options.provider}" is not logged in; `
-        + `run \`npx dsh-llm-oauth-login ${options.provider}\` or \`/oauth login ${options.provider}\``,
+        + `run \`/oauth login ${options.provider}\` or use Settings → OAuth / 订阅`,
         'MISSING_CREDENTIAL',
       )
     }
