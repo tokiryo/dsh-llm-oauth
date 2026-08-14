@@ -1,0 +1,84 @@
+{
+  "name": "dsh-llm-oauth",
+  "description": "DeepSeek Harness plugin: OAuth / subscription-plan LLM providers (Grok, GitHub Copilot, OpenAI Codex, Anthropic, OpenRouter)",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "packageManager": "pnpm@11.7.0",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "scripts": {
+    "build": "tsdown --config tsdown.config.ts",
+    "prepare": "node scripts/prepare.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "login": "node bin/login.mjs"
+  },
+  "bin": {
+    "dsh-llm-oauth-login": "./bin/login.mjs"
+  },
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "bin",
+    "src",
+    "cordis.patch.yml",
+    "README.md",
+    "README.zh.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "oauth",
+    "grok",
+    "xai",
+    "github-copilot",
+    "openai-codex",
+    "anthropic",
+    "openrouter"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YOUR_GITHUB_USER/dsh-llm-oauth.git"
+  },
+  "homepage": "https://github.com/YOUR_GITHUB_USER/dsh-llm-oauth",
+  "bugs": {
+    "url": "https://github.com/YOUR_GITHUB_USER/dsh-llm-oauth/issues"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "@earendil-works/pi-ai": "^0.82.1"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/dsh-llm": "*",
+    "@deepseek-ai/schemastery": "*"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": { "optional": true },
+    "@deepseek-ai/dsh-llm": { "optional": true },
+    "@deepseek-ai/schemastery": { "optional": true }
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.0",
+    "tsdown": "^0.22.2",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}
