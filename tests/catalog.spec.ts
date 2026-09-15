@@ -37,6 +37,13 @@ describe('oauth catalog', () => {
     expect(() => resolveOAuthProviders(['openai'])).toThrow(/no OAuth method/)
   })
 
+  it('includes GPT-6 from the upstream Codex catalog', () => {
+    const [provider] = resolveOAuthProviders(['openai-codex'])
+    const models = createModels()
+    models.setProvider(provider!)
+    expect(models.getModels('openai-codex').map(model => model.id)).toContain('gpt-6-astra')
+  })
+
   it('refuses an unknown catalog id', () => {
     expect(() => resolveOAuthProviders(['not-a-provider'])).toThrow(/unknown pi-ai catalog provider/)
   })

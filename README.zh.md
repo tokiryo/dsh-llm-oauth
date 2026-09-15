@@ -167,7 +167,14 @@ pnpm run build
 node bin/login.mjs --list
 ```
 
-`@deepseek-ai/*` 是 peer：类型检查需要本机已安装 DSH 的 profile；单元测试（catalog / store / service）只依赖 `@earendil-works/pi-ai`。
+`@deepseek-ai/*` 是宿主提供的 peer；完整测试需要本机已安装或链接这些依赖。Git 安装构建不对宿主 peer 做类型检查。
+
+## 兼容更新
+
+- 锁文件中的 Pi 已升级到 `0.85.1`，其 Codex 目录包含 `gpt-6-astra`。
+- 已对照 Harness `0.1.5-rc.2`（源码提交 `c291e7961a`）调整：提取消息首项的系统提示、传递选中的推理强度、兼容 `ToolCallId` 改名，同时保留旧版 `CallId` 支持。
+- Settings 接入使用 `SettingsProvider.installSection` 服务 API；`deepEqualJson` 从宿主 peer `@deepseek-ai/dsh-util-values` 导入，避免引用新版 `dsh-settings` 已移除的独立导出。
+- 锁文件已移除第三方镜像 tarball 地址，项目 `.npmrc` 使用官方 npm 源，修复 [issue #1](https://github.com/ziyou979/dsh-llm-oauth/issues/1)。正常 Git 安装可执行 `prepare`，无需跳过脚本。
 
 ## 限制
 

@@ -10,7 +10,7 @@ Official plugin contract: [first plugin](https://github.com/deepseek-ai/deepseek
 - Bundle: `package.json` `dsh.bundle.patch` → `cordis.patch.yml`.
 - Optional web client: `package.json` `dsh.client` → `lib/client.js` (`settings.section`, id `oauth`, order 12).
 - Git installs must build with `scripts/prepare.mjs` (tsdown host + client; do not typecheck DSH peers). Client needs `lightningcss`; skip it quietly if missing.
-- `@deepseek-ai/*` are peers from the host profile. `@earendil-works/pi-ai` is this package's dependency (current `^0.84.2`).
+- `@deepseek-ai/*` are peers from the host profile. `@earendil-works/pi-ai` is this package's dependency (current `^0.85.1`).
 - Registrations go through `ctx.llm.registerAdapter` / `registerConfigurableProviders` / `ctx.commands.register` (when present).
 - Settings namespace: `llm-oauth` (`catalog` + enabled `providers` dict). Default is dormant (`providers: {}`).
 - Optional HTTP API under `/dsh-llm-oauth/*` when `webServer` is present (`ctx.inject(['webServer'], …)`).

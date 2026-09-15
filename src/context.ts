@@ -53,7 +53,10 @@ function emptyUsage(): AssistantMessage['usage'] {
   }
 }
 
-function toAssistant(message: Message & { role: 'assistant' }): AssistantMessage {
+function toAssistant(message: Message): AssistantMessage {
+  if (message.source.kind !== 'model') {
+    throw new LlmError('Assistant message is missing model provenance', 'UNSUPPORTED_CONTENT')
+  }
   const content: Array<TextContent | ThinkingContent | ToolCall> = []
   for (const block of message.content) {
     if (block.type === 'text') content.push({ type: 'text', text: block.text })
@@ -93,8 +96,12 @@ export function toPiContext(options: GenerateOptions): PiContext {
 
   const toolNames = new Map<string, string>()
   const messages: PiMessage[] = []
+  const leading = options.messages[0]
+  const systemPrompt = options.system ?? (leading?.role === 'system' ? flattenText(leading) || undefined : undefined)
+  const history = options.system === undefined && leading?.role === 'system'
+    ? options.messages.slice(1) : options.messages
 
-  for (const message of options.messages) {
+  for (const message of history) {
     if (message.role === 'system') {
       messages.push({ role: 'user', content: flattenText(message), timestamp: 0 })
       continue
@@ -132,7 +139,7 @@ export function toPiContext(options: GenerateOptions): PiContext {
   }))
 
   return {
-    ...options.system !== undefined ? { systemPrompt: options.system } : {},
+    ...systemPrompt !== undefined ? { systemPrompt } : {},
     messages,
     ...tools !== undefined && tools.length > 0 ? { tools } : {},
   }

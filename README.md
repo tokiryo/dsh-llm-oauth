@@ -161,7 +161,14 @@ pnpm run build
 node bin/login.mjs --list
 ```
 
-`@deepseek-ai/*` packages are peers supplied by the DSH profile. Unit tests (catalog / store / service) only need `@earendil-works/pi-ai`.
+`@deepseek-ai/*` packages are peers supplied by the DSH profile. The full test suite requires the host peers to be installed or linked locally. Git installation builds do not typecheck those peers.
+
+## Compatibility update
+
+- Pi is pinned by the lockfile to `0.85.1`; its Codex catalog includes `gpt-6-astra`.
+- Reviewed against Harness `0.1.5-rc.2` (source commit `c291e7961a`): leading system messages, selected reasoning efforts, and the `ToolCallId` rename are handled. Older `CallId` exports remain supported.
+- Settings integration uses the `SettingsProvider.installSection` service API; `deepEqualJson` comes from the host peer `@deepseek-ai/dsh-util-values`, avoiding removed standalone exports from `dsh-settings`.
+- The lockfile no longer embeds third-party mirror tarball URLs. The project `.npmrc` selects the official npm registry, fixing [issue #1](https://github.com/ziyou979/dsh-llm-oauth/issues/1). Normal Git installs can run `prepare`; skipping scripts is not required.
 
 ## Limits
 

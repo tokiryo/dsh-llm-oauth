@@ -2,14 +2,23 @@
  * pi-ai assistant event → harness StreamChunk translation.
  */
 
-import { CallId, LlmError } from '@deepseek-ai/dsh-llm'
-import type { FinishReason, StreamChunk, TokenUsage } from '@deepseek-ai/dsh-llm'
+import * as llm from '@deepseek-ai/dsh-llm'
+import { LlmError } from '@deepseek-ai/dsh-llm'
+import type { FinishReason, StreamChunk, TokenUsage, ToolCallBlock } from '@deepseek-ai/dsh-llm'
 import type { AssistantMessage, AssistantMessageEvent, Usage as PiUsage } from '@earendil-works/pi-ai'
 
-function mapUsage(usage: PiUsage): TokenUsage {
+// Harness renamed CallId to ToolCallId; accept both host generations.
+const ids = llm as unknown as {
+  ToolCallId?: (id: string) => ToolCallBlock['id']
+  CallId?: (id: string) => ToolCallBlock['id']
+}
+const toolCallId = ids.ToolCallId ?? ids.CallId!
+
+function mapUsage(usage: PiUsage): TokenUsage & { totalTokens: number } {
   return {
     inputTokens: usage.input,
     outputTokens: usage.output,
+    totalTokens: usage.totalTokens,
     ...usage.cacheRead > 0 ? { cacheReadTokens: usage.cacheRead } : {},
     ...usage.cacheWrite > 0 ? { cacheWriteTokens: usage.cacheWrite } : {},
   }
@@ -32,6 +41,12 @@ function mapStopReason(message: AssistantMessage): FinishReason {
       return { kind: 'max-tokens' }
     case 'toolUse':
       return { kind: 'tool-calls' }
+    case 'pending':
+    case 'deferred':
+      return {
+        kind: 'error',
+        failure: { message: `Unsupported terminal pi-ai state: ${message.stopReason}`, code: 'PI_AI_ERROR' },
+      }
     case 'aborted':
       return {
         kind: 'aborted',
@@ -92,7 +107,7 @@ export async function* toStreamChunks(
         yield {
           type: 'tool-call-delta',
           index: event.contentIndex,
-          id: CallId(known?.id ?? ''),
+          id: toolCallId(known?.id ?? ''),
           ...known?.name ? { name: known.name } : {},
           argumentsDelta: event.delta,
         }
@@ -104,7 +119,7 @@ export async function* toStreamChunks(
           index: event.contentIndex,
           block: {
             type: 'tool-call',
-            id: CallId(event.toolCall.id),
+            id: toolCallId(event.toolCall.id),
             name: event.toolCall.name,
             arguments: JSON.stringify(event.toolCall.arguments),
           },

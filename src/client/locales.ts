@@ -3,7 +3,7 @@
 export const zh = {
   nav: 'OAuth / 订阅',
   title: 'OAuth / 订阅套餐',
-  intro: '在此开启订阅提供方、登录或退出。只有「已开启」的提供方会出现在模型选择器；API Key 仍在设置 → 模型。认证操作都在本页完成，不必在聊天框输入 /oauth。',
+  intro: '在此开启订阅提供方、登录或退出。只有「已开启」的提供方会出现在模型选择器；API Key 仍在设置 → 模型。也可在聊天中使用 /oauth 管理订阅提供方。',
   authFile: '凭据文件',
   refresh: '刷新状态',
   loading: '加载中…',
@@ -35,7 +35,7 @@ export type OauthSettingsKey = keyof typeof zh
 export const en: Record<OauthSettingsKey, string> = {
   nav: 'OAuth / Subscriptions',
   title: 'OAuth / subscription plans',
-  intro: 'Enable subscription providers and sign in or out here. Only enabled providers appear in the model picker; API keys stay under Settings → Models. All auth actions happen on this page — no need to type /oauth in chat.',
+  intro: 'Enable subscription providers and sign in or out here. Only enabled providers appear in the model picker; API keys stay under Settings → Models. You can also manage subscription providers with /oauth in chat.',
   authFile: 'Credential file',
   refresh: 'Refresh',
   loading: 'Loading…',

@@ -11,7 +11,8 @@ import type {
   DirectoryRegistrationHandle,
   LlmConfigurableProvider,
 } from '@deepseek-ai/dsh-llm'
-import { deepEqualJson, installSettingsSection, settingsNamespace } from '@deepseek-ai/dsh-settings'
+import type {} from '@deepseek-ai/dsh-settings'
+import { deepEqualJson } from '@deepseek-ai/dsh-util-values'
 import { OAuthPiAiAdapter } from './adapter.ts'
 import { SETTINGS_NS, catalogDisplayName, resolveOAuthProviders } from './catalog.ts'
 import { handleOauthCommand } from './command.ts'
@@ -27,7 +28,7 @@ import { OAUTH_HTTP_PREFIX, handleOauthHttp } from './http.ts'
 import { OAuthController } from './service.ts'
 import { FileCredentialStore } from './store.ts'
 
-const NS = settingsNamespace(SETTINGS_NS)
+const NS = SETTINGS_NS
 
 /**
  * Apply the plugin to its Cordis context.
@@ -145,14 +146,16 @@ export function apply(ctx: Context, config: Config): void {
   }
 
   // Settings section when the seam exists (web / headless with settings-file).
-  // installSettingsSection injects until settings is present; until then the
-  // composition entry alone drives enablement via the initial refresh below.
-  installSettingsSection(ctx, NS, Config, entry, {
-    validate: assertServiceable,
-    setSource: (source) => {
-      current = source
-    },
-    onChange: refresh,
+  // The provider owns registration, watching, and fallback on detachment.
+  // Until it attaches, the composition entry drives enablement below.
+  ctx.inject(['settings'], (settingsCtx) => {
+    settingsCtx.settings.installSection(ctx, NS, Config, entry, {
+      validate: assertServiceable,
+      setSource: (source) => {
+        current = source
+      },
+      onChange: refresh,
+    })
   })
 
   // Composition-only path before settings attach (and when settings never mounts).

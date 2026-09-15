@@ -12,7 +12,7 @@ export const name = 'llm-oauth'
 
 /**
  * Services that must exist before the plugin is applied.
- * `settings` is optional at runtime (installSettingsSection injects when present).
+ * `settings` is optional at runtime (its section attaches through ctx.inject).
  */
 export const inject = ['llm']
 

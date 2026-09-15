@@ -14,6 +14,7 @@ import {
   attributionHeaders,
   LlmAdapter,
   LlmError,
+  ReasoningEffortId,
 } from '@deepseek-ai/dsh-llm'
 import type {
   GenerateOptions,
@@ -102,7 +103,7 @@ export class OAuthPiAiAdapter extends LlmAdapter {
         provider,
         id: model.id,
         name: model.name,
-        inputModalities: [...model.input],
+        inputModalities: ['text'],
       }))
     })
   }
@@ -116,13 +117,13 @@ export class OAuthPiAiAdapter extends LlmAdapter {
       const resolved = this.requireModel(provider, model)
       const levels = getSupportedThinkingLevels(resolved)
       const reasoning = levels.length > 0 && !(levels.length === 1 && levels[0] === 'off')
-        ? { efforts: levels.map(level => ({ id: level, name: level })) }
+        ? { efforts: levels.map(level => ({ id: ReasoningEffortId(level), name: level })) }
         : undefined
       return {
         provider,
         id: model,
         name: resolved.name,
-        inputModalities: [...resolved.input],
+        inputModalities: ['text'],
         context: { contextWindow: resolved.contextWindow },
         ...reasoning === undefined ? {} : { reasoning },
       }
@@ -156,6 +157,12 @@ export class OAuthPiAiAdapter extends LlmAdapter {
       throw new LlmError('dsh-llm-oauth does not support GenerateOptions.stop', 'UNSUPPORTED_OPTION')
     }
     const model = this.requireModel(options.provider, options.model)
+    const effort = options.reasoningEffort
+    const reasoning = effort === undefined ? undefined
+      : getSupportedThinkingLevels(model).find(level => level === effort)
+    if (effort !== undefined && reasoning === undefined) {
+      throw new LlmError(`Model "${model.id}" does not support reasoning effort "${effort}"`, 'UNSUPPORTED_REASONING_EFFORT')
+    }
     const auth = await this.models.checkAuth(options.provider)
     if (auth === undefined) {
       throw new LlmError(
@@ -168,6 +175,7 @@ export class OAuthPiAiAdapter extends LlmAdapter {
     const context = toPiContext(options)
     const events = this.models.streamSimple(model, context, {
       maxRetries: 0,
+      ...reasoning === undefined || reasoning === 'off' ? {} : { reasoning },
       ...options.temperature === undefined ? {} : { temperature: options.temperature },
       ...options.maxTokens === undefined ? {} : { maxTokens: options.maxTokens },
       ...options.sessionId === undefined ? {} : { sessionId: String(options.sessionId) },
