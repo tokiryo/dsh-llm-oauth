@@ -46,7 +46,7 @@ Only **enabled** providers list models. They sit alongside API-key providers und
 dsh plugin --profile web add github:ziyou979/dsh-llm-oauth
 ```
 
-From a local checkout:
+From a local checkout (this fork):
 
 ```sh
 dsh plugin --profile web add ./dsh-llm-oauth
@@ -74,6 +74,7 @@ The Web UI adds a settings section (between **Models** and **Plugins**) with:
 - Actions: enable, disable, sign in, sign out (buttons on this page — no need to type `/oauth` in chat)
 - Successful sign-in stores tokens and auto-enables the provider
 - Device codes show on the page (with copy); authorization URLs open in a new tab, or via **Open authorization page** if the popup is blocked
+- After enable: a **model picker** checklist (show / hide / rename catalog models). Unticked models stay off the chat picker. `models: []` keeps the provider enabled but lists nothing; omit `models` to show the full catalog.
 
 Providers that ask “pick a login method” (e.g. `openai-codex`) auto-select **device code** on Web (browser login needs a local `:1455` callback). If you still see an interactive-prompt error, use `bin/login.mjs` in a terminal.
 
@@ -92,6 +93,8 @@ Host HTTP API (same-origin Web):
 | `POST` | `/dsh-llm-oauth/disable` | `{ "provider": "xai" }` |
 | `POST` | `/dsh-llm-oauth/login` | `{ "provider": "xai" }` |
 | `POST` | `/dsh-llm-oauth/logout` | `{ "provider": "xai" }` |
+| `GET` | `/dsh-llm-oauth/models?provider=xai` | — |
+| `POST` | `/dsh-llm-oauth/models` | `{ "provider": "xai", "models": ["grok-4.6"], "modelNames": { "grok-4.6": "Grok" } }` (`models`/`modelNames`: `null` restores catalog defaults) |
 
 ## ChatGPT / Codex: enable device-code auth first
 

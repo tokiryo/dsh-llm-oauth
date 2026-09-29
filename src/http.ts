@@ -104,6 +104,62 @@ export async function handleOauthHttp(
       return
     }
 
+    if (method === 'GET' && path === `${API_PREFIX}/models`) {
+      const provider = url.searchParams.get('provider')
+      if (provider === null || provider.length === 0) {
+        sendJson(res, 400, { error: 'missing provider' })
+        return
+      }
+      sendJson(res, 200, controller.picker(provider))
+      return
+    }
+
+    if (method === 'POST' && path === `${API_PREFIX}/models`) {
+      const body = await readJson(req)
+      const provider = providerOf(body, url)
+      if (provider === undefined) {
+        sendJson(res, 400, { error: 'missing provider' })
+        return
+      }
+      const patch: {
+        displayName?: string | null
+        models?: string[] | null
+        modelNames?: Record<string, string> | null
+      } = {}
+      if ('displayName' in body) {
+        const value = body.displayName
+        patch.displayName = value === null || typeof value === 'string' ? value : String(value)
+      }
+      if ('models' in body) {
+        if (body.models === null) patch.models = null
+        else if (Array.isArray(body.models) && body.models.every(item => typeof item === 'string')) {
+          patch.models = body.models
+        } else {
+          sendJson(res, 400, { error: 'models must be a string array or null' })
+          return
+        }
+      }
+      if ('modelNames' in body) {
+        if (body.modelNames === null) patch.modelNames = null
+        else if (typeof body.modelNames === 'object' && !Array.isArray(body.modelNames)) {
+          const names: Record<string, string> = {}
+          for (const [id, label] of Object.entries(body.modelNames as Record<string, unknown>)) {
+            if (typeof label === 'string') names[id] = label
+          }
+          patch.modelNames = names
+        } else {
+          sendJson(res, 400, { error: 'modelNames must be an object or null' })
+          return
+        }
+      }
+      await controller.setPicker(provider, patch)
+      sendJson(res, 200, {
+        ...await controller.status(),
+        picker: controller.picker(provider),
+      })
+      return
+    }
+
     if (method === 'POST' && path === `${API_PREFIX}/login`) {
       const body = await readJson(req)
       const provider = providerOf(body, url)

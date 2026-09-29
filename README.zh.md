@@ -78,6 +78,7 @@ Web 端在设置侧栏会多一页 **OAuth / 订阅**（在「模型」与「插
 - 操作：开启、关闭、登录、退出登录（都在本页点按钮完成，不必在聊天框输入 `/oauth`）
 - 登录成功会写入 token，并自动开启
 - 设备码显示在页面提示区（可复制）；授权链接会尽量新开标签，弹窗被拦时点 **打开授权页**
+- 开启后会出现 **模型选择器**：勾选/隐藏/重命名 catalog 模型。未勾选的不会出现在聊天模型选择器。`models: []` 保持开启但列表为空；省略 `models` 则显示全部目录。
 
 `openai-codex` 等需要「选择登录方式」的提供方，Web 端会**自动选设备码**（浏览器回调要本机 `:1455` 端口，设置页用不了）。若仍提示 interactive prompt，再用终端 `bin/login.mjs`。
 
@@ -96,6 +97,10 @@ Host 提供轻量 HTTP API（同机 Web 使用）：
 | `POST` | `/dsh-llm-oauth/disable` | `{ "provider": "xai" }` |
 | `POST` | `/dsh-llm-oauth/login` | `{ "provider": "xai" }` |
 | `POST` | `/dsh-llm-oauth/logout` | `{ "provider": "xai" }` |
+| `GET` | `/dsh-llm-oauth/models?provider=xai` | — |
+| `POST` | `/dsh-llm-oauth/models` | `{ "provider": "xai", "models": ["grok-4.6"] }`（`null` 则恢复 catalog 默认） |
+| `GET` | `/dsh-llm-oauth/models?provider=xai` | — |
+| `POST` | `/dsh-llm-oauth/models` | `{ "provider": "xai", "models": ["grok-4.6"], "modelNames": { "grok-4.6": "Grok" } }`（`null` 则恢复 catalog 默认） |
 
 ## ChatGPT / Codex：先打开设备码授权
 

@@ -17,7 +17,8 @@ describe('home paths', () => {
   })
 
   it('places the auth file under the home', () => {
-    expect(defaultAuthPath('C:/tmp/dsh-home').replaceAll('\\', '/')).toBe('C:/tmp/dsh-home/pi-ai-oauth.json')
+    const home = join(tmpdir(), 'dsh-home')
+    expect(defaultAuthPath(home)).toBe(join(home, 'pi-ai-oauth.json'))
   })
 })
 
@@ -49,7 +50,7 @@ describe('FileCredentialStore', () => {
       })),
       store.modify('xai', async current => ({
         type: 'oauth',
-        access: current === undefined ? 'b' : `${current.access}-b`,
+        access: current?.type === 'oauth' ? `${current.access}-b` : 'b',
         refresh: 'r',
         expires: 2,
       })),

@@ -28,6 +28,16 @@ export const zh = {
   copyCode: '复制设备码',
   popupBlocked: '浏览器拦截了弹窗，请点「打开授权页」或允许本站弹窗后重试登录。',
   openrouterWarn: 'OpenRouter catalog 很大；确认需要后再开启。',
+  modelsTitle: '模型选择器',
+  modelsIntro: '勾选会出现在聊天模型选择器中的模型。不勾选则隐藏；清空选择后该提供方仍保持开启但列表为空。',
+  modelsAll: '显示全部目录模型',
+  modelsNone: '全部隐藏',
+  modelsSave: '保存选择',
+  modelsLoadFailed: '无法加载模型目录',
+  modelsEmpty: '该提供方目录为空。',
+  modelsListed: '已显示',
+  modelsHidden: '已隐藏',
+  modelsRename: '显示名',
 } as const
 
 export type OauthSettingsKey = keyof typeof zh
@@ -60,4 +70,14 @@ export const en: Record<OauthSettingsKey, string> = {
   copyCode: 'Copy code',
   popupBlocked: 'The browser blocked the popup. Click “Open authorization page” or allow popups for this site and try again.',
   openrouterWarn: 'OpenRouter’s catalog is large; enable only if you need it.',
+  modelsTitle: 'Model picker',
+  modelsIntro: 'Tick models that should appear in the chat picker. Unticked models stay hidden. Clearing every tick keeps the provider enabled but lists nothing.',
+  modelsAll: 'Show full catalog',
+  modelsNone: 'Hide all',
+  modelsSave: 'Save selection',
+  modelsLoadFailed: 'Could not load model catalog',
+  modelsEmpty: 'This provider’s catalog is empty.',
+  modelsListed: 'Shown',
+  modelsHidden: 'Hidden',
+  modelsRename: 'Label',
 }

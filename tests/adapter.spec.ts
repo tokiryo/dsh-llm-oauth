@@ -4,8 +4,13 @@ import { createAssistantMessageEventStream } from '@earendil-works/pi-ai'
 import { OAuthPiAiAdapter } from '../src/adapter.ts'
 import { FileCredentialStore } from '../src/store.ts'
 
-function adapter() {
-  return new OAuthPiAiAdapter({ authPath: 'unused', store: new FileCredentialStore('unused'), catalog: ['openai-codex'] })
+function adapter(profileOf?: (provider: string) => { models?: string[], modelNames?: Record<string, string> } | undefined) {
+  return new OAuthPiAiAdapter({
+    authPath: 'unused',
+    store: new FileCredentialStore('unused'),
+    catalog: ['openai-codex'],
+    ...profileOf === undefined ? {} : { profileOf },
+  })
 }
 
 describe('Harness request options', () => {
@@ -33,5 +38,20 @@ describe('Harness request options', () => {
       for await (const _ of subject.stream({ provider: 'openai-codex', model: model!.id, messages: [], reasoningEffort: ReasoningEffortId('invalid') })) {}
     }).rejects.toMatchObject({ code: 'UNSUPPORTED_REASONING_EFFORT' })
     expect(auth).not.toHaveBeenCalled()
+  })
+
+  it('filters and renames picker rows from the live profile', async () => {
+    const subject = adapter()
+    const catalog = await subject.listModels('openai-codex')
+    expect(catalog.length).toBeGreaterThan(1)
+    const keep = catalog[0]!
+    const filtered = adapter(() => ({
+      models: [keep.id],
+      modelNames: { [keep.id]: 'Pinned' },
+    }))
+    await expect(filtered.listModels('openai-codex')).resolves.toEqual([
+      expect.objectContaining({ id: keep.id, name: 'Pinned' }),
+    ])
+    expect(filtered.catalogModels('openai-codex').length).toBe(catalog.length)
   })
 })

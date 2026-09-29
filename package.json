@@ -1,7 +1,7 @@
 {
   "name": "dsh-llm-oauth",
   "description": "DeepSeek Harness plugin: OAuth / subscription-plan LLM providers (Grok, GitHub Copilot, OpenAI Codex, Anthropic, OpenRouter)",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": false,
   "type": "module",
   "packageManager": "pnpm@11.7.0",
@@ -13,7 +13,7 @@
     "build:host": "tsdown --config tsdown.config.ts",
     "build:client": "tsdown --config tsdown.client.config.ts",
     "test": "node ./node_modules/vitest/vitest.mjs run",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "login": "node bin/login.mjs",
     "prepare": "node ./scripts/prepare.mjs",
     "prepublishOnly": "pnpm run build"
@@ -82,6 +82,7 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/cosmokit": "*",
     "@deepseek-ai/dsh-llm": "*",
     "@deepseek-ai/dsh-settings": "*",
     "@deepseek-ai/dsh-util-values": "*",
@@ -90,6 +91,7 @@
   },
   "peerDependenciesMeta": {
     "@deepseek-ai/cordis": { "optional": true },
+    "@deepseek-ai/cosmokit": { "optional": true },
     "@deepseek-ai/dsh-llm": { "optional": true },
     "@deepseek-ai/dsh-settings": { "optional": true },
     "@deepseek-ai/dsh-util-values": { "optional": true },

@@ -16,7 +16,7 @@ export const name = 'llm-oauth'
  */
 export const inject = ['llm']
 
-export { Config, resolveConfig, enabledProviderIds } from './config.ts'
+export { Config, resolveConfig, enabledProviderIds, unwrapMaybeVolatile, applyPickerPatch } from './config.ts'
 export type { ResolvedConfig, OAuthProviderProfile } from './config.ts'
 export { apply } from './runtime.ts'
 export { OAuthPiAiAdapter } from './adapter.ts'
@@ -30,4 +30,9 @@ export {
 } from './catalog.ts'
 export { defaultAuthPath } from './home.ts'
 export { OAuthController } from './service.ts'
-export type { OAuthProviderStatus, OAuthStatusSnapshot } from './service.ts'
+export type {
+  OAuthProviderStatus,
+  OAuthStatusSnapshot,
+  OAuthPickerPatch,
+  OAuthCatalogModel,
+} from './service.ts'

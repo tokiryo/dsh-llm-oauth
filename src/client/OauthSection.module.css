@@ -223,3 +223,65 @@
 .buttonLink:hover {
   opacity: 0.92;
 }
+
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--dsw-alias-border-l2, #e5e5e5);
+}
+
+.pickerHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pickerTitle {
+  font-size: 13px;
+}
+
+.modelList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 280px;
+  overflow: auto;
+}
+
+.modelRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 180px);
+  gap: 8px;
+  align-items: center;
+}
+
+.modelLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  font-size: 13px;
+}
+
+.modelLabel span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.modelRename {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--dsw-alias-border-l2, #d4d4d4);
+  border-radius: 6px;
+  background: var(--dsw-alias-bg-elevated, #fff);
+  color: inherit;
+  font-size: 12px;
+  padding: 4px 8px;
+}

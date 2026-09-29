@@ -4,7 +4,7 @@
  */
 
 import { contentHasImage, LlmError } from '@deepseek-ai/dsh-llm'
-import type { ContentBlock, GenerateOptions, Message } from '@deepseek-ai/dsh-llm'
+import type { ContentBlock, GenerateOptions, RequestMessage } from '@deepseek-ai/dsh-llm'
 import type {
   AssistantMessage,
   Context as PiContext,
@@ -15,19 +15,11 @@ import type {
   ToolCall,
 } from '@earendil-works/pi-ai'
 
-function flattenText(message: Message): string {
+function flattenText(message: { readonly content: readonly ContentBlock[] }): string {
   return message.content
     .filter(block => block.type === 'text')
     .map(block => block.text)
     .join('')
-}
-
-function toolResultText(blocks: readonly ContentBlock[]): string {
-  return blocks.map(block => {
-    if (block.type === 'text') return block.text
-    if (block.type === 'tool-result') return toolResultText(block.content)
-    return ''
-  }).join('')
 }
 
 function parseArguments(raw: string): Record<string, unknown> {
@@ -53,8 +45,8 @@ function emptyUsage(): AssistantMessage['usage'] {
   }
 }
 
-function toAssistant(message: Message): AssistantMessage {
-  if (message.source.kind !== 'model') {
+function toAssistant(message: RequestMessage): AssistantMessage {
+  if (message.role !== 'assistant' || message.source.kind !== 'model') {
     throw new LlmError('Assistant message is missing model provenance', 'UNSUPPORTED_CONTENT')
   }
   const content: Array<TextContent | ThinkingContent | ToolCall> = []
@@ -115,21 +107,24 @@ export function toPiContext(options: GenerateOptions): PiContext {
       continue
     }
 
-    const text = flattenText(message)
-    const results = message.content.filter(block => block.type === 'tool-result')
-    if (text.length > 0 || results.length === 0) {
-      messages.push({ role: 'user', content: text, timestamp: 0 })
-    }
-    for (const result of results) {
+    // Tool results are first-class `tool` messages answering one call id.
+    if (message.role === 'tool') {
+      const callId = String(message.toolCallId)
       messages.push({
         role: 'toolResult',
-        toolCallId: String(result.toolCallId),
-        toolName: toolNames.get(String(result.toolCallId)) ?? 'unknown',
-        content: [{ type: 'text', text: toolResultText(result.content) || '(no output)' }],
-        isError: result.isError === true,
+        toolCallId: callId,
+        toolName: toolNames.get(callId) ?? 'unknown',
+        content: [{ type: 'text', text: flattenText(message) || '(no output)' }],
+        isError: message.isError === true,
         timestamp: 0,
       })
+      continue
     }
+
+    const text = flattenText(message)
+    // Developer messages carry tool additions/removals; tools are sent separately.
+    if (message.role === 'developer' && text.length === 0) continue
+    messages.push({ role: 'user', content: text, timestamp: 0 })
   }
 
   const tools: PiTool[] | undefined = options.tools?.map(tool => ({

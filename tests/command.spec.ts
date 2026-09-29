@@ -1,8 +1,9 @@
 import { describe, expect, it, beforeEach } from 'vitest'
 import { handleOauthCommand, listLoginWatches, resetLoginWatches } from '../src/command.ts'
 import type { OAuthPiAiAdapter } from '../src/adapter.ts'
+import type { AuthInteraction } from '@earendil-works/pi-ai'
 
-function fakeAdapter(login: OAuthPiAiAdapter['login']): OAuthPiAiAdapter {
+function fakeAdapter(login: (provider: string, interaction: AuthInteraction) => Promise<unknown>): OAuthPiAiAdapter {
   return {
     authPath: () => '/tmp/pi-ai-oauth.json',
     catalogIds: () => ['xai'],
@@ -80,7 +81,7 @@ describe('/oauth login', () => {
       displayName: () => 'OpenAI Codex',
       checkAuth: async () => undefined,
       logout: async () => undefined,
-      login: async (_provider, interaction) => {
+      login: async (_provider: string, interaction: AuthInteraction) => {
         chosen = await interaction.prompt({
           type: 'select',
           message: 'Select OpenAI Codex login method:',
@@ -116,7 +117,7 @@ describe('/oauth login', () => {
       displayName: () => 'GitHub Copilot',
       checkAuth: async () => undefined,
       logout: async () => undefined,
-      login: async (_provider, interaction) => {
+      login: async (_provider: string, interaction: AuthInteraction) => {
         enterprise = await interaction.prompt({
           type: 'text',
           message: 'GitHub Enterprise URL/domain (blank for github.com)',

@@ -8,6 +8,7 @@
 
 import type { OAuthPiAiAdapter } from './adapter.ts'
 import { catalogDisplayName } from './catalog.ts'
+import type { OAuthProviderProfile } from './config.ts'
 import type { LoginWatch } from './command.ts'
 import { listLoginWatches } from './command.ts'
 
@@ -43,6 +44,21 @@ export interface OAuthStatusSnapshot {
   providers: OAuthProviderStatus[]
 }
 
+/** Picker patch written through settings. `null` clears a field. */
+export interface OAuthPickerPatch {
+  displayName?: string | null
+  models?: string[] | null
+  modelNames?: Record<string, string> | null
+}
+
+/** One catalog model as the picker editor sees it. */
+export interface OAuthCatalogModel {
+  id: string
+  name: string
+  listed: boolean
+  label: string
+}
+
 /** Callbacks the runtime supplies so the service never owns Cordis handles. */
 export interface OAuthControllerHooks {
   /** Current enabled route ids (sorted). */
@@ -51,6 +67,10 @@ export interface OAuthControllerHooks {
   enable(provider: string): Promise<void>
   /** Disable a catalog id (drop profile + route). */
   disable(provider: string): Promise<void>
+  /** Merge picker knobs onto one enabled (or newly enabled) profile. */
+  setPicker(provider: string, patch: OAuthPickerPatch): Promise<void>
+  /** Live profile for one provider (picker selection). */
+  profileOf(provider: string): OAuthProviderProfile | undefined
 }
 
 /**
@@ -121,6 +141,42 @@ export class OAuthController {
   async logout(provider: string): Promise<void> {
     this.requireCatalog(provider)
     await this.adapter.logout(provider)
+  }
+
+  /**
+   * Full catalog + current picker selection for one provider.
+   * @param provider - catalog id.
+   */
+  picker(provider: string): {
+    provider: string
+    models: OAuthCatalogModel[]
+    allowlist: boolean
+  } {
+    this.requireCatalog(provider)
+    const profile = this.hooks.profileOf(provider)
+    const catalog = this.adapter.catalogModels(provider)
+    const allow = profile?.models
+    const names = profile?.modelNames
+    return {
+      provider,
+      allowlist: allow !== undefined,
+      models: catalog.map(model => ({
+        id: model.id,
+        name: model.name,
+        listed: allow === undefined || allow.includes(model.id),
+        label: names?.[model.id]?.trim() || model.name,
+      })),
+    }
+  }
+
+  /**
+   * Persist picker knobs (and enable the provider if it was dormant).
+   * @param provider - catalog id.
+   * @param patch - fields to merge; `null` restores catalog defaults.
+   */
+  async setPicker(provider: string, patch: OAuthPickerPatch): Promise<void> {
+    this.requireCatalog(provider)
+    await this.hooks.setPicker(provider, patch)
   }
 
   /** Underlying adapter (login helper / commands). */

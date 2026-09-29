@@ -8,10 +8,13 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import {
   disableOauthProvider,
   enableOauthProvider,
+  fetchOauthPicker,
   fetchOauthStatus,
   loginOauthProvider,
   logoutOauthProvider,
+  saveOauthPicker,
   type OAuthLoginCommand,
+  type OAuthPickerSnapshot,
   type OAuthProviderStatus,
   type OAuthStatusSnapshot,
 } from './api.ts'
@@ -24,7 +27,7 @@ export interface OauthSectionInjected {
 
 export type OauthSectionProps = Partial<OauthSectionInjected>
 
-type BusyAction = 'enable' | 'disable' | 'login' | 'logout' | 'refresh'
+type BusyAction = 'enable' | 'disable' | 'login' | 'logout' | 'refresh' | 'picker'
 
 /** Try to open the OAuth URL; returns false if the browser blocked the popup. */
 function tryOpenAuthWindow(url: string): boolean {
@@ -280,6 +283,148 @@ function ProviderRow(props: {
             </button>
           )}
       </div>
+      {row.enabled ? <ModelPicker provider={row.id} t={t} disabled={disabled} /> : null}
     </li>
+  )
+}
+
+function ModelPicker(props: {
+  provider: string
+  t: (key: OauthSettingsKey) => string
+  disabled: boolean
+}): ReactNode {
+  const { provider, t, disabled } = props
+  const [picker, setPicker] = useState<OAuthPickerSnapshot | undefined>(undefined)
+  const [error, setError] = useState<string | undefined>(undefined)
+  const [saving, setSaving] = useState(false)
+  const [draft, setDraft] = useState<Set<string>>(new Set())
+  const [labels, setLabels] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    let cancelled = false
+    setError(undefined)
+    void fetchOauthPicker(provider).then((next) => {
+      if (cancelled) return
+      setPicker(next)
+      setDraft(new Set(next.models.filter(model => model.listed).map(model => model.id)))
+      const nextLabels: Record<string, string> = {}
+      for (const model of next.models) {
+        if (model.label !== model.name) nextLabels[model.id] = model.label
+      }
+      setLabels(nextLabels)
+    }).catch((err: unknown) => {
+      if (!cancelled) setError(err instanceof Error ? err.message : String(err))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [provider])
+
+  const persist = async (models: string[] | null, modelNames?: Record<string, string> | null) => {
+    setSaving(true)
+    setError(undefined)
+    try {
+      const next = await saveOauthPicker(provider, { models, ...modelNames === undefined ? {} : { modelNames } })
+      const snapshot = next.picker ?? await fetchOauthPicker(provider)
+      setPicker(snapshot)
+      setDraft(new Set(snapshot.models.filter(model => model.listed).map(model => model.id)))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const toggle = (id: string, listed: boolean) => {
+    const next = new Set(draft)
+    if (listed) next.add(id)
+    else next.delete(id)
+    setDraft(next)
+  }
+
+  if (error !== undefined && picker === undefined) {
+    return <p className={styles.error}>{`${t('modelsLoadFailed')}: ${error}`}</p>
+  }
+  if (picker === undefined) {
+    return <p className={styles.notice}>{t('loading')}</p>
+  }
+  if (picker.models.length === 0) {
+    return <p className={styles.notice}>{t('modelsEmpty')}</p>
+  }
+
+  const listedCount = draft.size
+  return (
+    <div className={styles.picker}>
+      <div className={styles.pickerHead}>
+        <strong className={styles.pickerTitle}>{t('modelsTitle')}</strong>
+        <span className={styles.meta}>{`${String(listedCount)} / ${String(picker.models.length)} ${t('modelsListed')}`}</span>
+      </div>
+      <p className={styles.notice}>{t('modelsIntro')}</p>
+      {error !== undefined ? <p className={styles.error}>{error}</p> : null}
+      <div className={styles.toolbar}>
+        <button
+          type="button"
+          className={styles.secondaryButton}
+          disabled={disabled || saving}
+          onClick={() => { void persist(null, Object.keys(labels).length === 0 ? null : labels) }}
+        >
+          {t('modelsAll')}
+        </button>
+        <button
+          type="button"
+          className={styles.secondaryButton}
+          disabled={disabled || saving}
+          onClick={() => { void persist([], Object.keys(labels).length === 0 ? null : labels) }}
+        >
+          {t('modelsNone')}
+        </button>
+        <button
+          type="button"
+          className={styles.button}
+          disabled={disabled || saving}
+          onClick={() => {
+            const names = Object.fromEntries(Object.entries(labels).filter(([, label]) => label.trim().length > 0))
+            void persist([...draft], Object.keys(names).length === 0 ? null : names)
+          }}
+        >
+          {saving ? t('busy') : t('modelsSave')}
+        </button>
+      </div>
+      <ul className={styles.modelList}>
+        {picker.models.map(model => (
+          <li key={model.id} className={styles.modelRow}>
+            <label className={styles.modelLabel}>
+              <input
+                type="checkbox"
+                checked={draft.has(model.id)}
+                disabled={disabled || saving}
+                onChange={event => { toggle(model.id, event.target.checked) }}
+              />
+              <span>
+                <span className={styles.rowName}>{model.label}</span>
+                <span className={styles.rowId}>{model.id}</span>
+              </span>
+            </label>
+            <input
+              className={styles.modelRename}
+              type="text"
+              aria-label={t('modelsRename')}
+              placeholder={model.name}
+              value={labels[model.id] ?? ''}
+              disabled={disabled || saving}
+              onChange={event => {
+                const value = event.target.value
+                setLabels((current) => {
+                  const next = { ...current }
+                  if (value.trim().length === 0) delete next[model.id]
+                  else next[model.id] = value
+                  return next
+                })
+              }}
+            />
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }

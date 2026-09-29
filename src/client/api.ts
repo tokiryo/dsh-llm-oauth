@@ -22,12 +22,26 @@ export interface OAuthLoginCommand {
   userCode?: string
 }
 
+export interface OAuthCatalogModel {
+  id: string
+  name: string
+  listed: boolean
+  label: string
+}
+
+export interface OAuthPickerSnapshot {
+  provider: string
+  allowlist: boolean
+  models: OAuthCatalogModel[]
+}
+
 export interface OAuthStatusSnapshot {
   authPath: string
   catalog: string[]
   enabled: string[]
   providers: OAuthProviderStatus[]
   command?: OAuthLoginCommand
+  picker?: OAuthPickerSnapshot
 }
 
 const BASE = '/dsh-llm-oauth'
@@ -98,5 +112,39 @@ export function logoutOauthProvider(provider: string): Promise<OAuthStatusSnapsh
   return request('/logout', {
     method: 'POST',
     body: JSON.stringify({ provider }),
+  })
+}
+
+export async function fetchOauthPicker(provider: string): Promise<OAuthPickerSnapshot> {
+  const response = await fetch(`${BASE}/models?provider=${encodeURIComponent(provider)}`, {
+    credentials: 'same-origin',
+    headers: { accept: 'application/json' },
+  })
+  const text = await response.text()
+  let body: unknown
+  try {
+    body = text.length === 0 ? {} : JSON.parse(text)
+  } catch {
+    throw new Error(text || `HTTP ${String(response.status)}`)
+  }
+  if (!response.ok) {
+    const message = typeof body === 'object' && body !== null && 'error' in body
+      ? String((body as { error: unknown }).error)
+      : `HTTP ${String(response.status)}`
+    throw new Error(message)
+  }
+  return body as OAuthPickerSnapshot
+}
+
+export function saveOauthPicker(
+  provider: string,
+  patch: {
+    models?: string[] | null
+    modelNames?: Record<string, string> | null
+  },
+): Promise<OAuthStatusSnapshot> {
+  return request('/models', {
+    method: 'POST',
+    body: JSON.stringify({ provider, ...patch }),
   })
 }

@@ -13,6 +13,10 @@ Official plugin contract: [first plugin](https://github.com/deepseek-ai/deepseek
 - `@deepseek-ai/*` are peers from the host profile. `@earendil-works/pi-ai` is this package's dependency (current `^0.85.1`).
 - Registrations go through `ctx.llm.registerAdapter` / `registerConfigurableProviders` / `ctx.commands.register` (when present).
 - Settings namespace: `llm-oauth` (`catalog` + enabled `providers` dict). Default is dormant (`providers: {}`).
+- `providers` **must** be `.volatile()` so Settings / `/oauth enable` can mutate it on Harness 0.1.7+. Unwrap Cordis `.get()` cells in `resolveConfig`.
+- Cordis volatile cells are frozen *plain* objects `{ get, [Symbol.for('cosmokit.volatile.write')] }`; detect by the symbol, not the prototype. Read the live `config` (not a startup snapshot) and re-sync routes on `loader/volatile-update`. `settings.installSection` no longer exists on 0.1.7.
+- Optional array/dict fields in the provider profile need `.default(undefined)`: schemastery otherwise injects `[]` / `{}` and `xai: {}` becomes an empty allowlist.
+- Optional per-provider picker knobs: `providers.<id>.models` (allowlist) and `providers.<id>.modelNames`. Do not invent model ids.
 - Optional HTTP API under `/dsh-llm-oauth/*` when `webServer` is present (`ctx.inject(['webServer'], …)`).
 - Do not also register the same provider id under `llm-pi-ai` (`DUPLICATE_ADAPTER`). Subscriptions here; API keys stay on first-party plugins.
 
@@ -34,5 +38,6 @@ Actions: `status` | `list` | `enable` | `disable` | `login` | `logout`.
 pnpm install
 pnpm test
 pnpm run build          # host (tsdown.config.ts) + client (tsdown.client.config.ts)
+pnpm run typecheck      # host + tests; the web client is verified by build:client (client peers ship only in the frontend)
 node bin/login.mjs --list
 ```

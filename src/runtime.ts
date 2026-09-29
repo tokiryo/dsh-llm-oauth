@@ -5,6 +5,7 @@
  * @module dsh-llm-oauth/runtime
  */
 
+import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Context } from '@deepseek-ai/cordis'
 import type {
   AdapterRegistrationHandle,
@@ -18,6 +19,7 @@ import { SETTINGS_NS, catalogDisplayName, resolveOAuthProviders } from './catalo
 import { handleOauthCommand } from './command.ts'
 import {
   Config,
+  applyPickerPatch,
   enabledProviderIds,
   resolveConfig,
   type OAuthProviderProfile,
@@ -29,6 +31,15 @@ import { OAuthController } from './service.ts'
 import { FileCredentialStore } from './store.ts'
 
 const NS = SETTINGS_NS
+
+/** The slice of `dsh-host-webserver` this plugin uses. */
+interface WebServerLike {
+  register(route: {
+    kind: 'prefix'
+    path: string
+    handler: (req: IncomingMessage, res: ServerResponse) => void
+  }): () => void
+}
 
 /**
  * Apply the plugin to its Cordis context.
@@ -46,9 +57,12 @@ export function apply(ctx: Context, config: Config): void {
     authPath,
     store,
     catalog: entry.catalog,
+    profileOf: (provider) => snapshot().providers[provider],
   })
 
-  let current: () => Config = () => entry
+  // Harness 0.1.7+: `config.providers` is a live volatile cell that the loader
+  // updates in place, so read `config` (not the startup `entry` snapshot).
+  let current: () => Config = () => config
   let registration: AdapterRegistrationHandle | undefined
   let registeredRoutes: string[] = []
   let directory: DirectoryRegistrationHandle | undefined
@@ -149,52 +163,66 @@ export function apply(ctx: Context, config: Config): void {
   // The provider owns registration, watching, and fallback on detachment.
   // Until it attaches, the composition entry drives enablement below.
   ctx.inject(['settings'], (settingsCtx) => {
-    settingsCtx.settings.installSection(ctx, NS, Config, entry, {
+    const settings = settingsCtx.settings as {
+      installSection?: (...args: unknown[]) => unknown
+    }
+    // Pre-0.1.7 Harness only; newer settings forms read volatile fields directly.
+    if (typeof settings.installSection !== 'function') return
+    settings.installSection(ctx, NS, Config, entry, {
       validate: assertServiceable,
-      setSource: (source) => {
+      setSource: (source: () => Config) => {
         current = source
       },
       onChange: refresh,
     })
   })
 
+  // Harness 0.1.7+: Settings / `/oauth enable` edits commit into the volatile
+  // cell without remounting; re-sync routes and the model directory.
+  ctx.on('loader/volatile-update' as never, (() => {
+    refresh()
+  }) as never)
+
   // Composition-only path before settings attach (and when settings never mounts).
   refresh()
+
+  const requireSettings = () => {
+    const settings = ctx.get('settings') as {
+      mutate(
+        ns: typeof NS,
+        ops: readonly ({ op: 'set', path: readonly string[], value: unknown } | { op: 'unset', path: readonly string[] })[],
+      ): Promise<void>
+    } | undefined
+    if (settings === undefined) {
+      throw new Error(
+        'dsh-llm-oauth: settings service is unavailable; edit llm-oauth.providers in settings.yaml',
+      )
+    }
+    return settings
+  }
 
   const controller = new OAuthController(adapter, {
     listEnabled: () => enabledIds(),
     enable: async (provider) => {
-      const settings = ctx.get('settings') as {
-        mutate(
-          ns: typeof NS,
-          ops: readonly ({ op: 'set', path: readonly string[], value: unknown } | { op: 'unset', path: readonly string[] })[],
-        ): Promise<void>
-      } | undefined
-      if (settings === undefined) {
-        throw new Error(
-          'dsh-llm-oauth: settings service is unavailable; add the provider under llm-oauth.providers in settings.yaml',
-        )
-      }
+      const settings = requireSettings()
+      const previous = snapshot().providers[provider]
       await settings.mutate(NS, [
-        { op: 'set', path: ['providers', provider], value: {} },
+        { op: 'set', path: ['providers', provider], value: previous ?? {} },
       ])
     },
     disable: async (provider) => {
-      const settings = ctx.get('settings') as {
-        mutate(
-          ns: typeof NS,
-          ops: readonly ({ op: 'set', path: readonly string[], value: unknown } | { op: 'unset', path: readonly string[] })[],
-        ): Promise<void>
-      } | undefined
-      if (settings === undefined) {
-        throw new Error(
-          'dsh-llm-oauth: settings service is unavailable; remove the provider under llm-oauth.providers in settings.yaml',
-        )
-      }
-      await settings.mutate(NS, [
+      await requireSettings().mutate(NS, [
         { op: 'unset', path: ['providers', provider] },
       ])
     },
+    setPicker: async (provider, patch) => {
+      const settings = requireSettings()
+      const next = applyPickerPatch(snapshot().providers[provider], patch)
+      await settings.mutate(NS, [
+        { op: 'set', path: ['providers', provider], value: next },
+      ])
+    },
+    profileOf: (provider) => snapshot().providers[provider],
   })
 
   const commands = ctx.get('commands') as {
@@ -252,7 +280,9 @@ export function apply(ctx: Context, config: Config): void {
   // mounts — `ctx.inject` waits for the service instead of sampling it at
   // apply time (the first-party pattern; see client-ui-theme).
   ctx.inject(['webServer'], (httpCtx) => {
-    httpCtx.effect(() => httpCtx.webServer.register({
+    // Optional peer (dsh-host-webserver) without published types here.
+    const webServer = (httpCtx as unknown as { webServer: WebServerLike }).webServer
+    httpCtx.effect(() => webServer.register({
       kind: 'prefix',
       path: OAUTH_HTTP_PREFIX,
       handler: (req, res) => {

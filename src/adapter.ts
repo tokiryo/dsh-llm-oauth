@@ -35,6 +35,7 @@ import type {
   Provider,
 } from '@earendil-works/pi-ai'
 import { resolveOAuthProviders } from './catalog.ts'
+import type { OAuthProviderProfile } from './config.ts'
 import { toPiContext } from './context.ts'
 import { toStreamChunks } from './stream.ts'
 
@@ -45,6 +46,11 @@ export interface OAuthAdapterOptions {
   store: CredentialStore
   /** Full OAuth catalog this adapter can own (not necessarily registered). */
   catalog: readonly string[]
+  /**
+   * Live profile for one enabled provider. Used by `listModels` to filter and
+   * rename picker rows. Missing / undefined fields mean “show the full catalog”.
+   */
+  profileOf?: (provider: string) => OAuthProviderProfile | undefined
 }
 
 /** OAuth-backed multi-provider adapter. */
@@ -96,14 +102,30 @@ export class OAuthPiAiAdapter extends LlmAdapter {
     return { id: entry.id, name: entry.name }
   }
 
+  /**
+   * Full pi-ai catalog for one provider, ignoring the picker allowlist.
+   * Settings uses this so the user can tick models that are currently hidden.
+   */
+  catalogModels(provider: string): readonly { id: string, name: string }[] {
+    this.requireProvider(provider)
+    return this.models.getModels(provider).map(model => ({ id: model.id, name: model.name }))
+  }
+
   override listModels(provider: string): Promise<readonly LlmModelInfo[]> {
     return Promise.resolve().then(() => {
       this.requireProvider(provider)
-      return this.models.getModels(provider).map(model => ({
+      const profile = this.options.profileOf?.(provider)
+      const allow = profile?.models
+      const names = profile?.modelNames
+      const listed = this.models.getModels(provider)
+      const filtered = allow === undefined
+        ? listed
+        : listed.filter(model => allow.includes(model.id))
+      return filtered.map(model => ({
         provider,
         id: model.id,
-        name: model.name,
-        inputModalities: ['text'],
+        name: names?.[model.id]?.trim() || model.name,
+        inputModalities: ['text'] as const,
       }))
     })
   }
@@ -119,10 +141,11 @@ export class OAuthPiAiAdapter extends LlmAdapter {
       const reasoning = levels.length > 0 && !(levels.length === 1 && levels[0] === 'off')
         ? { efforts: levels.map(level => ({ id: ReasoningEffortId(level), name: level })) }
         : undefined
+      const override = this.options.profileOf?.(provider)?.modelNames?.[model]?.trim()
       return {
         provider,
         id: model,
-        name: resolved.name,
+        name: override || resolved.name,
         inputModalities: ['text'],
         context: { contextWindow: resolved.contextWindow },
         ...reasoning === undefined ? {} : { reasoning },
