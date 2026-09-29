@@ -8,6 +8,7 @@ import type { ContentBlock, GenerateOptions, RequestMessage } from '@deepseek-ai
 import type {
   AssistantMessage,
   Context as PiContext,
+  JsonObject,
   Message as PiMessage,
   TextContent,
   ThinkingContent,
@@ -22,11 +23,11 @@ function flattenText(message: { readonly content: readonly ContentBlock[] }): st
     .join('')
 }
 
-function parseArguments(raw: string): Record<string, unknown> {
+function parseArguments(raw: string): JsonObject {
   try {
     const parsed: unknown = JSON.parse(raw)
     if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-      return parsed as Record<string, unknown>
+      return parsed as JsonObject
     }
   } catch {
     // tolerate malformed historical arguments
